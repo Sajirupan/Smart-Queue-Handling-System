@@ -22,6 +22,7 @@ exports.generateToken = async (req, res) => {
             tokenNumber,
             user: userId || null,
             customerName: req.body.customerName || 'Guest',
+            phoneNumber: req.body.phone || null,
             serviceType,
             priority: priority || 'Normal',
             status: 'Waiting'

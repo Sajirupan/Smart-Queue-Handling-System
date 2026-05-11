@@ -10,6 +10,7 @@ const QueueSchema = new mongoose.Schema({
         ref: 'User',
     },
     customerName: String,
+    phoneNumber: String,
     serviceType: {
         type: String,
         required: true,
