@@ -112,6 +112,29 @@ exports.createCounter = async (req, res) => {
     }
 };
 
+// @desc    Update counter
+// @route   PUT /api/admin/counters/:id
+// @access  Private/Admin
+exports.updateCounter = async (req, res) => {
+    try {
+        const { counterName, staff, status } = req.body;
+        const updateData = {};
+        if (counterName) updateData.counterName = counterName;
+        if (staff !== undefined) updateData.staff = staff;
+        if (status) updateData.status = status;
+
+        const counter = await Counter.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate('staff', 'name');
+        
+        // Broadcast update
+        const io = req.app.get('io');
+        if (io) io.emit('counter_updated', counter);
+
+        res.status(200).json({ success: true, data: counter });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
 // @desc    Delete user
 exports.deleteUser = async (req, res) => {
     try {

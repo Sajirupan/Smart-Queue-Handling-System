@@ -118,6 +118,16 @@ export default function AdminDashboard() {
     }
   };
 
+   const handleUpdateCounter = async (id: string, updates: any) => {
+    try {
+      await api.put(`/admin/counters/${id}`, updates);
+      toast.success('Counter updated');
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to update counter');
+    }
+  };
+
   if (loading || !user) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-50">
        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
@@ -290,9 +300,14 @@ export default function AdminDashboard() {
                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-brand-primary group-hover:scale-110 transition-transform">
                               <Monitor size={24} />
                            </div>
-                           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${counter.status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'}`}>
-                             {counter.status}
-                           </span>
+                            <button 
+                              onClick={() => handleUpdateCounter(counter._id, { status: counter.status === 'Active' ? 'Inactive' : 'Active' })}
+                              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${
+                                counter.status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'
+                              }`}
+                            >
+                              {counter.status}
+                            </button>
                         </div>
                         
                         <h4 className="text-xl font-black text-slate-900 mb-2">{counter.counterName}</h4>
@@ -301,9 +316,18 @@ export default function AdminDashboard() {
                               <span className="text-slate-400 uppercase tracking-wider">Current Token</span>
                               <span className="text-brand-primary">{counter.currentToken || 'Waiting...'}</span>
                            </div>
-                           <div className="flex justify-between text-xs font-bold">
+                           <div className="flex justify-between items-center text-xs font-bold">
                               <span className="text-slate-400 uppercase tracking-wider">Staff</span>
-                              <span className="text-slate-900">{counter.staff?.name || 'Unassigned'}</span>
+                              <select 
+                                value={counter.staff?._id || ''}
+                                onChange={(e) => handleUpdateCounter(counter._id, { staff: e.target.value || null })}
+                                className="bg-transparent text-slate-900 border-none focus:ring-0 cursor-pointer outline-none text-right"
+                              >
+                                <option value="">Unassigned</option>
+                                {allUsers.filter(u => u.role === 'staff').map(s => (
+                                  <option key={s._id} value={s._id}>{s.name}</option>
+                                ))}
+                              </select>
                            </div>
 
                            {counter.qrCode && (
