@@ -30,6 +30,10 @@ const QueueSchema = new mongoose.Schema({
         ref: 'Counter',
     },
     waitingTime: Number,
+    priorityLevel: {
+        type: Number,
+        default: 1
+    },
     createdAt: {
         type: Date,
         default: Date.now,

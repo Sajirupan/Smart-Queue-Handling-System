@@ -54,7 +54,7 @@ exports.callNext = async (req, res) => {
 
         // Get the next waiting customer
         const nextCustomer = await Queue.findOne({ status: 'Waiting' })
-            .sort({ priority: -1, createdAt: 1 });
+            .sort({ priorityLevel: -1, createdAt: 1 });
 
         if (!nextCustomer) {
             return res.status(404).json({ success: false, message: 'No customers in queue' });

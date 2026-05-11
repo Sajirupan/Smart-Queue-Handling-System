@@ -1,5 +1,22 @@
 const Queue = require('../models/Queue');
 
+const Counter = require('../models/Counter');
+
+// @desc    Get counter info by ID (Public)
+// @route   GET /api/queue/counter/:id
+// @access  Public
+exports.getCounterInfo = async (req, res) => {
+    try {
+        const counter = await Counter.findById(req.params.id);
+        if (!counter) {
+            return res.status(404).json({ success: false, message: 'Counter not found' });
+        }
+        res.status(200).json({ success: true, data: counter });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
 // @desc    Generate a new token
 // @route   POST /api/queue/generate
 // @access  Public
@@ -25,6 +42,7 @@ exports.generateToken = async (req, res) => {
             phoneNumber: req.body.phone || null,
             serviceType,
             priority: priority || 'Normal',
+            priorityLevel: priority === 'VIP' ? 3 : priority === 'Emergency' ? 4 : (priority === 'Normal' || !priority) ? 2 : 1,
             status: 'Waiting'
         });
 
