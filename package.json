@@ -1,8 +1,7 @@
 {
-  "name": "smart-queue-root",
-  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
-    "install": "cd frontend && npm install"
+    "install-all": "npm install --prefix frontend",
+    "build": "npm run build --prefix frontend"
   }
 }
