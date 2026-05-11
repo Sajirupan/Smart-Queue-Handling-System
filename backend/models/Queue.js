@@ -8,16 +8,16 @@ const QueueSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
     },
+    customerName: String,
     serviceType: {
         type: String,
         required: true,
     },
     priority: {
         type: String,
-        enum: ['Regular', 'Elderly', 'VIP', 'Emergency'],
-        default: 'Regular',
+        enum: ['Regular', 'Normal', 'VIP', 'Emergency'],
+        default: 'Normal',
     },
     status: {
         type: String,

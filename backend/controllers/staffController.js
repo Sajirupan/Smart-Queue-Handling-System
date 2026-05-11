@@ -3,8 +3,6 @@ const Counter = require('../models/Counter');
 const User = require('../models/User');
 
 // @desc    Get all counters
-// @route   GET /api/staff/counters
-// @access  Private/Staff
 exports.getCounters = async (req, res) => {
     try {
         const counters = await Counter.find().populate('staff', 'name');
@@ -14,9 +12,17 @@ exports.getCounters = async (req, res) => {
     }
 };
 
+// @desc    Get current staff's assigned counter info
+exports.getCounterInfo = async (req, res) => {
+    try {
+        const counter = await Counter.findOne({ staff: req.user.id }).populate('staff', 'name');
+        res.status(200).json({ success: true, data: counter });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
 // @desc    Assign staff to counter
-// @route   POST /api/staff/assign-counter
-// @access  Private/Staff
 exports.assignCounter = async (req, res) => {
     try {
         const { counterId } = req.body;
@@ -37,11 +43,16 @@ exports.assignCounter = async (req, res) => {
     }
 };
 
-// ... previous callNext and completeService logic ...
 exports.callNext = async (req, res) => {
     try {
         const { counterId } = req.body;
+        const counter = await Counter.findById(counterId);
 
+        if (!counter) {
+            return res.status(404).json({ success: false, message: 'Counter not found' });
+        }
+
+        // Get the next waiting customer
         const nextCustomer = await Queue.findOne({ status: 'Waiting' })
             .sort({ priority: -1, createdAt: 1 });
 
@@ -49,27 +60,23 @@ exports.callNext = async (req, res) => {
             return res.status(404).json({ success: false, message: 'No customers in queue' });
         }
 
+        // If there was a previous token being served, mark it as completed or skipped?
+        // For now, let's just update the new one
         nextCustomer.status = 'Serving';
         nextCustomer.counter = counterId;
         await nextCustomer.save();
 
-        await Counter.findByIdAndUpdate(counterId, {
-            currentToken: nextCustomer._id
-        });
+        counter.currentToken = nextCustomer._id;
+        await counter.save();
 
         const io = req.app.get('io');
         io.emit('queue_updated');
-
-        // Notification Logic: Find the 5th person in queue and notify them
-        const upcomingQueue = await Queue.find({ status: 'Waiting' })
-            .sort({ priority: -1, createdAt: 1 })
-            .limit(5);
         
-        if (upcomingQueue.length === 5) {
-            const fifthPerson = upcomingQueue[4];
-            console.log(`[NOTIFICATION] Sending SMS/Email to ${fifthPerson.customerName || 'Customer'}: You are 5th in line. Please be ready!`);
-            // Here you would call nodemailer or twilio
-        }
+        // Specific event for the public board to trigger sound/announcement
+        io.emit('token_called', {
+            tokenNumber: nextCustomer.tokenNumber,
+            counterName: counter.counterName
+        });
 
         res.status(200).json({ success: true, data: nextCustomer });
     } catch (err) {
@@ -82,12 +89,11 @@ exports.completeService = async (req, res) => {
         const { counterId } = req.body;
         const counter = await Counter.findById(counterId);
         
-        if (counter.currentToken) {
+        if (counter && counter.currentToken) {
             await Queue.findByIdAndUpdate(counter.currentToken, { status: 'Completed' });
+            counter.currentToken = null;
+            await counter.save();
         }
-
-        counter.currentToken = null;
-        await counter.save();
 
         const io = req.app.get('io');
         io.emit('queue_updated');

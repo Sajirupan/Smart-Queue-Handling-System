@@ -5,7 +5,11 @@ const Queue = require('../models/Queue');
 // @access  Public
 exports.generateToken = async (req, res) => {
     try {
-        const { name, serviceType, priority, userId } = req.body;
+        const { serviceType, priority, userId } = req.body;
+
+        if (!serviceType) {
+            return res.status(400).json({ success: false, message: 'Please provide a service type' });
+        }
 
         // Get count for today to generate token number
         const start = new Date();
@@ -16,36 +20,47 @@ exports.generateToken = async (req, res) => {
 
         const queueItem = await Queue.create({
             tokenNumber,
-            user: userId || '662f8b5f9e1b2c001f4e5d6c', // Placeholder if not logged in
+            user: userId || null,
+            customerName: req.body.customerName || 'Guest',
             serviceType,
-            priority,
+            priority: priority || 'Normal',
             status: 'Waiting'
         });
 
         // Broadcast to all connected clients
         const io = req.app.get('io');
-        io.emit('new_token', queueItem);
+        if (io) io.emit('new_token', queueItem);
 
         res.status(201).json({
             success: true,
             data: queueItem
         });
     } catch (err) {
+        console.error('Generate Token Error:', err);
         res.status(400).json({ success: false, message: err.message });
     }
 };
 
 // @desc    Get all active queue items
-// @route   GET /api/queue/active
-// @access  Public
 exports.getActiveQueue = async (req, res) => {
     try {
+        // Try finding without populate first if it fails, or just handle it
         const queue = await Queue.find({ status: { $in: ['Waiting', 'Serving'] } })
             .sort({ createdAt: 1 })
-            .populate('user', 'name');
+            .populate({
+                path: 'user',
+                select: 'name',
+                match: { _id: { $exists: true } } // Only populate if user exists
+            });
             
         res.status(200).json({ success: true, data: queue });
     } catch (err) {
-        res.status(400).json({ success: false, message: err.message });
+        console.error('Get Active Queue Error:', err);
+        // Return 500 for server errors, and include the error message for debugging
+        res.status(500).json({ 
+            success: false, 
+            message: 'Internal Server Error while fetching queue',
+            error: err.message 
+        });
     }
 };

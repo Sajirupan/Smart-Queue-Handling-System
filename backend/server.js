@@ -15,9 +15,6 @@ const { Server } = require('socket.io');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -28,6 +25,18 @@ const io = new Server(server, {
     }
 });
 
+// Database connection check middleware
+const dbCheck = (req, res, next) => {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Database is not connected. Please check your MongoDB connection or IP Whitelist.' 
+        });
+    }
+    next();
+};
+
 // Body parser
 app.use(express.json());
 
@@ -37,8 +46,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Security Middlewares
 app.use(helmet());
-// app.use(mongoSanitize());
-// app.use(xss());
 app.use(hpp());
 app.use(cors({
     origin: 'http://localhost:3000',
@@ -57,14 +64,12 @@ const auth = require('./routes/auth');
 const admin = require('./routes/admin');
 const queue = require('./routes/queue');
 const staff = require('./routes/staff');
-// const customer = require('./routes/customer');
 
 // Mount routers
 app.use('/api/auth', auth);
-app.use('/api/admin', admin);
-app.use('/api/queue', queue);
-app.use('/api/staff', staff);
-// app.use('/api/customer', customer);
+app.use('/api/admin', dbCheck, admin);
+app.use('/api/queue', dbCheck, queue);
+app.use('/api/staff', dbCheck, staff);
 
 // Socket.io connection
 io.on('connection', (socket) => {
@@ -77,6 +82,15 @@ app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await connectDB();
+        server.listen(PORT, () => {
+            console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Server failed to start:', err);
+    }
+};
+
+startServer();
