@@ -29,10 +29,7 @@ const io = new Server(server, {
 const dbCheck = (req, res, next) => {
     const mongoose = require('mongoose');
     if (mongoose.connection.readyState !== 1) {
-        return res.status(503).json({ 
-            success: false, 
-            message: 'Database is not connected. Please check your MongoDB connection or IP Whitelist.' 
-        });
+        console.warn('⚠️ [Offline Fallback] MongoDB is offline. Serving request via in-memory database.');
     }
     next();
 };
@@ -55,7 +52,8 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 mins
-    max: 100
+    max: 1000, // Increased to 1000 to prevent false-positive rate limit triggers during real-time dashboard operations
+    message: { success: false, message: 'Too many requests from this IP, please try again after 10 minutes.' }
 });
 app.use(limiter);
 

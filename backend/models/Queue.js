@@ -40,4 +40,7 @@ const QueueSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Queue', QueueSchema);
+const QueueModel = mongoose.model('Queue', QueueSchema);
+const { wrapWithOfflineFallback } = require('../config/offlineFallback');
+module.exports = wrapWithOfflineFallback('Queue', QueueModel);
+

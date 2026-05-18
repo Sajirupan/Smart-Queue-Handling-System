@@ -75,7 +75,7 @@ exports.getCounters = async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         const updatedCounters = await Promise.all(counters.map(async (counter) => {
             const lastUpdate = counter.lastQrUpdate ? counter.lastQrUpdate.toISOString().split('T')[0] : '';
-            if (lastUpdate !== today) {
+            if (lastUpdate !== today || !counter.qrCode) {
                 const qrUrl = `http://localhost:3000/scan/${counter._id}?date=${today}`;
                 counter.qrCode = await QRCode.toDataURL(qrUrl);
                 counter.lastQrUpdate = new Date();
@@ -120,7 +120,9 @@ exports.updateCounter = async (req, res) => {
         const { counterName, staff, status } = req.body;
         const updateData = {};
         if (counterName) updateData.counterName = counterName;
-        if (staff !== undefined) updateData.staff = staff;
+        if (staff !== undefined) {
+            updateData.staff = (staff === '' || staff === 'unassigned') ? null : staff;
+        }
         if (status) updateData.status = status;
 
         const counter = await Counter.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate('staff', 'name');

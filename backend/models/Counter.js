@@ -26,4 +26,7 @@ const CounterSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Counter', CounterSchema);
+const CounterModel = mongoose.model('Counter', CounterSchema);
+const { wrapWithOfflineFallback } = require('../config/offlineFallback');
+module.exports = wrapWithOfflineFallback('Counter', CounterModel);
+

@@ -47,8 +47,20 @@ function ScanContent() {
   }, [user]);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    if (dateParam !== today) {
+    const todayUTC = new Date().toISOString().split('T')[0];
+    const todayLocal = new Date().toLocaleDateString('en-CA');
+    const validDates = [
+      todayUTC,
+      todayLocal,
+      new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      new Date(Date.now() - 86400000).toLocaleDateString('en-CA'),
+      new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      new Date(Date.now() + 86400000).toLocaleDateString('en-CA')
+    ];
+
+    const isValidDate = !dateParam || validDates.includes(dateParam);
+
+    if (!isValidDate) {
       setLoading(false);
       return;
     }
@@ -111,8 +123,20 @@ function ScanContent() {
     </div>
   );
 
-  const today = new Date().toISOString().split('T')[0];
-  if (dateParam !== today) return (
+  const todayUTC = new Date().toISOString().split('T')[0];
+  const todayLocal = new Date().toLocaleDateString('en-CA');
+  const validDates = [
+    todayUTC,
+    todayLocal,
+    new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    new Date(Date.now() - 86400000).toLocaleDateString('en-CA'),
+    new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    new Date(Date.now() + 86400000).toLocaleDateString('en-CA')
+  ];
+
+  const isValidDate = !dateParam || validDates.includes(dateParam);
+
+  if (!isValidDate) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-display">
       <div className="max-w-md w-full bg-white rounded-[3rem] p-12 shadow-2xl shadow-red-500/5 border border-red-100">
         <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-8">

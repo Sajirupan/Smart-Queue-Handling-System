@@ -27,43 +27,7 @@ export default function LandingPage() {
         <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-brand-secondary/5 blur-[100px] rounded-full animate-pulse delay-700" />
       </div>
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 glass border-b border-slate-200/50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-2">
-            <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/20 group-hover:rotate-6 transition-transform">
-              <Ticket className="text-white" size={24} />
-            </div>
-            <span className="text-2xl font-black text-slate-900 tracking-tighter">
-              Smart<span className="text-brand-primary">Queue</span>
-            </span>
-          </Link>
-          
-          <div className="hidden md:flex items-center gap-8">
-            <div className="flex items-center gap-6 text-sm font-bold text-slate-500">
-              <Link href="/status" className="hover:text-brand-primary transition-colors">Live Board</Link>
-              <Link href="/generate" className="hover:text-brand-primary transition-colors">Join Queue</Link>
-            </div>
-            
-            <div className="h-4 w-px bg-slate-200" />
 
-            {user ? (
-              <Link href={user.role === 'admin' ? '/admin' : user.role === 'staff' ? '/staff' : '/status'} 
-                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 text-sm font-bold">
-                <LayoutDashboard size={16} />
-                Dashboard
-              </Link>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link href="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors px-4">Sign In</Link>
-                <Link href="/signup" className="px-5 py-2.5 bg-brand-primary text-white rounded-xl hover:bg-brand-primary/90 transition-all shadow-lg shadow-brand-primary/20 text-sm font-bold">
-                  Get Started
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-32 px-6">

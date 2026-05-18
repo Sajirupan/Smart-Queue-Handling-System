@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import Providers from './Providers';
+import Navigation from '@/components/Navigation';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body className="bg-surface-50 text-slate-900 selection:bg-brand-primary/10">
         <Providers>
+          <Navigation />
           {children}
         </Providers>
       </body>
