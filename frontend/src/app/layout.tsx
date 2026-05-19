@@ -17,6 +17,9 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: 'SmartQueue | Modern Queue Management',
   description: 'The world\'s most advanced digital queue orchestration platform.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
