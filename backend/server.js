@@ -17,10 +17,15 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+    "http://localhost:3000",
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 const io = new Server(server, {
-    cors: { 
-        origin: "http://localhost:3000", 
-        methods: ["GET", "POST"],
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials: true
     }
 });
@@ -45,7 +50,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet());
 app.use(hpp());
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true
 }));
 
