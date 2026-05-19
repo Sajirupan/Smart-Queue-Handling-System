@@ -166,37 +166,44 @@ export default function StatusPage() {
               </div>
            </div>
 
-           <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-              {waiting.length > 0 ? waiting.map((item, idx) => (
-                <div key={item._id} className={`group p-6 rounded-3xl border transition-all flex items-center justify-between animate-in slide-in-from-right-4 duration-500 delay-${idx * 100} ${
-                  idx === 0 ? 'bg-brand-primary/10 border-brand-primary/30' : 'bg-white/5 border-white/5'
-                }`}>
-                  <div className="flex items-center gap-5">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${
-                      idx === 0 ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'bg-white/10 text-slate-400'
-                    }`}>
-                      {item.tokenNumber.split('-')[1] || item.tokenNumber}
-                    </div>
-                    <div>
-                      <div className="font-black text-lg">{item.tokenNumber}</div>
-                      <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.15em]">{item.serviceType}</div>
-                    </div>
-                  </div>
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                    item.priority === 'Emergency' ? 'bg-red-500/20 text-red-400' :
-                    item.priority === 'VIP' ? 'bg-amber-500/20 text-amber-400' :
-                    'bg-white/5 text-slate-500'
-                  }`}>
-                    {item.priority}
-                  </div>
-                </div>
-              )) : (
-                <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
-                  <Info size={48} className="mb-4" />
-                  <p className="text-lg font-black uppercase tracking-widest">Queue is clear</p>
-                </div>
-              )}
-           </div>
+            <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+               {waiting.length > 0 ? waiting.map((item, idx) => (
+                 <div key={item._id} className={`group p-5 rounded-3xl border transition-all flex items-center gap-4 animate-in slide-in-from-right-4 duration-500 ${
+                   idx === 0 ? 'bg-brand-primary/10 border-brand-primary/30' : 'bg-white/5 border-white/5'
+                 }`}>
+                   {/* Avatar */}
+                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 overflow-hidden ${
+                     idx === 0 ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20' : 'bg-white/10 text-slate-400'
+                   }`}>
+                     {item.user?.avatar && item.user.avatar !== 'default-avatar.png' ? (
+                       <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api','')}/${item.user.avatar}`} alt="" className="w-full h-full object-cover" />
+                     ) : (
+                       <span>{(item.user?.name || item.customerName || 'G').charAt(0).toUpperCase()}</span>
+                     )}
+                   </div>
+                   {/* Info */}
+                   <div className="flex-1 min-w-0">
+                     <div className="font-black text-base">{item.tokenNumber}</div>
+                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate">
+                       {item.user?.name || item.customerName || 'Guest'}
+                     </div>
+                     <div className="text-[9px] text-slate-500 uppercase tracking-widest">{item.serviceType}</div>
+                   </div>
+                   <div className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shrink-0 ${
+                     item.priority === 'Emergency' ? 'bg-red-500/20 text-red-400' :
+                     item.priority === 'VIP' ? 'bg-amber-500/20 text-amber-400' :
+                     'bg-white/5 text-slate-500'
+                   }`}>
+                     {item.priority}
+                   </div>
+                 </div>
+               )) : (
+                 <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
+                   <Info size={48} className="mb-4" />
+                   <p className="text-lg font-black uppercase tracking-widest">Queue is clear</p>
+                 </div>
+               )}
+            </div>
 
            <div className="mt-8 pt-8 border-t border-white/5 text-center">
               <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] leading-loose">

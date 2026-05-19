@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Queue = require('../models/Queue');
 const Counter = require('../models/Counter');
+const Feedback = require('../models/Feedback');
 const QRCode = require('qrcode');
 
 // @desc    Get dashboard stats
@@ -8,33 +9,48 @@ const QRCode = require('qrcode');
 // @access  Private/Admin
 exports.getStats = async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments();
-        const totalTokens = await Queue.countDocuments();
-        const activeQueues = await Queue.countDocuments({ status: { $in: ['Waiting', 'Serving'] } });
-        const completedQueues = await Queue.countDocuments({ status: 'Completed' });
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
 
-        // Calculate average waiting time (mock for now, would use logic with createdAt/updatedAt)
-        const avgWait = 12; 
+        const [totalUsers, totalTokens, activeQueues, completedQueues, feedbackData] = await Promise.all([
+            User.countDocuments({ role: 'customer' }),
+            Queue.countDocuments({ createdAt: { $gte: start } }),
+            Queue.countDocuments({ status: { $in: ['Waiting', 'Serving'] } }),
+            Queue.countDocuments({ status: 'Completed', createdAt: { $gte: start } }),
+            Feedback.aggregate([{ $group: { _id: null, avg: { $avg: '$rating' }, total: { $sum: 1 } } }])
+        ]);
+
+        // Real hourly traffic for today
+        const hourlyRaw = await Queue.aggregate([
+            { $match: { createdAt: { $gte: start } } },
+            { $group: { _id: { $hour: '$createdAt' }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } }
+        ]);
+        const hourlyData = hourlyRaw.map(h => ({
+            hour: `${h._id % 12 || 12}${h._id < 12 ? 'am' : 'pm'}`,
+            count: h.count
+        }));
+
+        // Real service type distribution
+        const serviceRaw = await Queue.aggregate([
+            { $match: { createdAt: { $gte: start } } },
+            { $group: { _id: '$serviceType', count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]);
+        const serviceData = serviceRaw.map(s => ({ serviceType: s._id, count: s.count }));
+
+        const avgWait = feedbackData.length > 0 ? feedbackData[0].avg.toFixed(1) : 0;
 
         res.status(200).json({
             success: true,
             data: {
+                totalUsers,
                 totalCustomers: totalTokens,
                 completedQueues,
-                averageWaitingTime: avgWait,
                 activeQueues,
-                hourlyData: [
-                    { hour: '9am', count: 12 },
-                    { hour: '10am', count: 18 },
-                    { hour: '11am', count: 25 },
-                    { hour: '12pm', count: 15 }
-                ],
-                serviceData: [
-                    { name: 'Billing', value: 40 },
-                    { name: 'Support', value: 30 },
-                    { name: 'Account', value: 20 },
-                    { name: 'Loan', value: 10 }
-                ]
+                averageWaitingTime: avgWait,
+                hourlyData,
+                serviceData
             }
         });
     } catch (err) {

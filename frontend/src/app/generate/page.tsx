@@ -20,12 +20,21 @@ export default function GenerateToken() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      toast.error('Please sign in to join the queue');
+      router.push('/login');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await api.post('/queue/generate', { 
         serviceType, 
         priority,
-        customerName: user?.name || 'Guest'
+        userId: user._id || user.id,
+        customerName: user.name,
+        phone: user.phone
       });
       
       setTokenResult(res.data.data || res.data);
@@ -70,6 +79,9 @@ export default function GenerateToken() {
           <div className="space-y-4">
             <Link href="/status" className="flex items-center justify-center gap-3 w-full py-5 bg-brand-primary text-white rounded-2xl font-black text-lg hover:shadow-xl hover:shadow-brand-primary/20 transition-all active:scale-95">
               Live Board <ArrowRight size={20} />
+            </Link>
+            <Link href="/feedback" className="flex items-center justify-center gap-3 w-full py-4 bg-amber-50 text-amber-600 rounded-2xl font-black text-sm hover:bg-amber-100 transition-all active:scale-95">
+              ★ Leave Feedback
             </Link>
             <button onClick={() => setTokenResult(null)} className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">
               New Session

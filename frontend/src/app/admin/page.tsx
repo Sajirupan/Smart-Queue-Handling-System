@@ -43,20 +43,25 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>({ totalCustomers: 0, completedQueues: 0, averageWaitingTime: 0, activeQueues: 0, hourlyData: [], weeklyData: [], serviceData: [] });
   const [counters, setCounters] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [feedbackStats, setFeedbackStats] = useState<any>({ avgRating: 0, total: 0 });
   const [newCounterName, setNewCounterName] = useState('');
   const [adminTab, setAdminTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchData = async () => {
     try {
-      const [statsRes, countersRes, usersRes] = await Promise.all([
+      const [statsRes, countersRes, usersRes, feedbackRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/counters'),
-        api.get('/admin/users')
+        api.get('/admin/users'),
+        api.get('/feedback')
       ]);
       setStats(statsRes.data.data || statsRes.data);
       setCounters(countersRes.data.data || countersRes.data);
       setAllUsers(usersRes.data.data || usersRes.data);
+      setFeedbacks(feedbackRes.data.data || []);
+      setFeedbackStats({ avgRating: feedbackRes.data.avgRating || 0, total: feedbackRes.data.total || 0 });
     } catch (err) {
       console.error('Fetch error:', err);
     }
@@ -149,6 +154,7 @@ export default function AdminDashboard() {
           <SidebarLink active={adminTab === 'dashboard'} onClick={() => setAdminTab('dashboard')} icon={<LayoutDashboard size={20} />} label="Overview" />
           <SidebarLink active={adminTab === 'counters'} onClick={() => setAdminTab('counters')} icon={<Monitor size={20} />} label="Counters" />
           <SidebarLink active={adminTab === 'staff'} onClick={() => setAdminTab('staff')} icon={<Users size={20} />} label="User Management" />
+          <SidebarLink active={adminTab === 'feedback'} onClick={() => setAdminTab('feedback')} icon={<BarChart3 size={20} />} label="Feedback" />
         </nav>
 
         <div className="pt-8 border-t border-white/5 space-y-2">
@@ -203,10 +209,10 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <AdminStatCard label="Tokens Generated" value={stats.totalCustomers} icon={<Ticket size={24}/>} trend="+12.5%" color="brand-primary" />
+                <AdminStatCard label="Tokens Today" value={stats.totalCustomers} icon={<Ticket size={24}/>} trend="+12.5%" color="brand-primary" />
                 <AdminStatCard label="Served Today" value={stats.completedQueues} icon={<CheckCircle size={24}/>} trend="+4.2%" color="emerald-500" />
                 <AdminStatCard label="Currently Waiting" value={stats.activeQueues} icon={<Clock size={24}/>} trend="-2.1%" color="amber-500" />
-                <AdminStatCard label="Avg. Wait Time" value={`${stats.averageWaitingTime}m`} icon={<Activity size={24}/>} trend="-5.4%" color="violet-500" />
+                <AdminStatCard label="Avg. Rating" value={feedbackStats.avgRating > 0 ? `${feedbackStats.avgRating}★` : 'N/A'} icon={<Activity size={24}/>} trend={feedbackStats.total > 0 ? `${feedbackStats.total} reviews` : 'No reviews'} color="violet-500" />
               </div>
 
               {/* Charts */}
@@ -451,6 +457,63 @@ export default function AdminDashboard() {
                </div>
             </div>
           )}
+
+          {adminTab === 'feedback' && (
+            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              {/* Summary */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 premium-shadow flex items-center gap-6">
+                  <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-3xl font-black">
+                    ★
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Average Rating</div>
+                    <div className="text-4xl font-black text-slate-900">{feedbackStats.avgRating || '—'}</div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 premium-shadow flex items-center gap-6">
+                  <div className="w-16 h-16 bg-brand-primary/10 text-brand-primary rounded-2xl flex items-center justify-center">
+                    <Users size={28} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Reviews</div>
+                    <div className="text-4xl font-black text-slate-900">{feedbackStats.total}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback List */}
+              <div className="bg-white rounded-[2.5rem] border border-slate-200 premium-shadow overflow-hidden">
+                <div className="p-8 border-b border-slate-100">
+                  <h2 className="text-xl font-black text-slate-900">Customer Feedback</h2>
+                  <p className="text-sm text-slate-500 font-medium mt-1">All reviews submitted by customers after service</p>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {feedbacks.length === 0 ? (
+                    <div className="py-20 text-center opacity-40">
+                      <BarChart3 size={48} className="mx-auto mb-4 text-slate-400" />
+                      <p className="font-black uppercase tracking-widest text-slate-500">No feedback yet</p>
+                    </div>
+                  ) : feedbacks.map((fb: any) => (
+                    <div key={fb._id} className="p-8 flex items-start gap-6 hover:bg-slate-50 transition-colors">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-black text-xl shrink-0">
+                        {(fb.customerName || 'A').charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-black text-slate-900">{fb.customerName}</div>
+                          <div className="text-amber-400 font-black text-lg">{'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}</div>
+                        </div>
+                        {fb.serviceType && <div className="text-[10px] font-black text-brand-primary uppercase tracking-widest mb-2">{fb.serviceType} • {fb.tokenNumber}</div>}
+                        <p className="text-sm text-slate-600 font-medium">{fb.message || <span className="italic text-slate-400">No message</span>}</p>
+                        <div className="text-[10px] text-slate-400 mt-2">{new Date(fb.createdAt).toLocaleString()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
@@ -473,13 +536,19 @@ function SidebarLink({ active, onClick, icon, label }: any) {
 }
 
 function AdminStatCard({ label, value, icon, trend, color }: any) {
+  const isPositive = trend?.startsWith('+');
+  const isNegative = trend?.startsWith('-');
   return (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 premium-shadow flex flex-col justify-between hover:translate-y-[-4px] transition-all">
        <div className="flex justify-between items-start mb-6">
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-slate-50 text-${color} shadow-sm`}>
              {icon}
           </div>
-          <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${trend.startsWith('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+          <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${
+            isPositive ? 'bg-emerald-50 text-emerald-600' :
+            isNegative ? 'bg-red-50 text-red-600' :
+            'bg-slate-100 text-slate-500'
+          }`}>
              {trend}
           </div>
        </div>

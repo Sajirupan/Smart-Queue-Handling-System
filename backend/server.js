@@ -67,12 +67,14 @@ const auth = require('./routes/auth');
 const admin = require('./routes/admin');
 const queue = require('./routes/queue');
 const staff = require('./routes/staff');
+const feedback = require('./routes/feedback');
 
 // Mount routers
 app.use('/api/auth', auth);
 app.use('/api/admin', dbCheck, admin);
 app.use('/api/queue', dbCheck, queue);
 app.use('/api/staff', dbCheck, staff);
+app.use('/api/feedback', dbCheck, feedback);
 
 // Socket.io connection
 io.on('connection', (socket) => {

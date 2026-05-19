@@ -35,14 +35,15 @@ export default function Signup() {
       return;
     }
 
-    if (!/^\+94\d{9}$/.test(phone)) {
+    const cleanPhone = phone.replace(/\s+/g, '');
+    if (!/^\+94\d{9}$/.test(cleanPhone)) {
       toast.error('Phone number must start with +94 followed by 9 digits');
       setLoading(false);
       return;
     }
 
     try {
-      await register(name, email, password, phone);
+      await register(name, email, password, cleanPhone);
       toast.success('Registration successful!');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Registration failed');

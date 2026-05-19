@@ -107,11 +107,10 @@ exports.getActiveQueue = async (req, res) => {
     try {
         // Try finding without populate first if it fails, or just handle it
         const queue = await Queue.find({ status: { $in: ['Waiting', 'Serving'] } })
-            .sort({ createdAt: 1 })
+            .sort({ priorityLevel: -1, createdAt: 1 })
             .populate({
                 path: 'user',
-                select: 'name',
-                match: { _id: { $exists: true } } // Only populate if user exists
+                select: 'name avatar phone',
             });
             
         res.status(200).json({ success: true, data: queue });
