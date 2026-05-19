@@ -69,7 +69,6 @@ export default function GlobalScanPage() {
                  <Scanner 
                    onScan={handleScan} 
                    onError={handleError}
-                   components={{ tracker: true }}
                  />
                ) : (
                  <div className="text-center p-6 flex flex-col items-center">
