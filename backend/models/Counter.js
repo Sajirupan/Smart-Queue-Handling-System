@@ -24,6 +24,10 @@ const CounterSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Queue',
     },
+    avgWaitTime: {
+        type: Number,
+        default: 5
+    }
 }, { timestamps: true });
 
 const CounterModel = mongoose.model('Counter', CounterSchema);

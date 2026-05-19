@@ -1,6 +1,41 @@
 const Queue = require('../models/Queue');
-
 const Counter = require('../models/Counter');
+const User = require('../models/User');
+const nodemailer = require('nodemailer');
+const twilio = require('twilio');
+
+const sendNotification = async (user, phone, tokenNumber, serviceType) => {
+    // Email Notification
+    if (user && user.email && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+            });
+            await transporter.sendMail({
+                from: `"SmartQueue" <${process.env.SMTP_USER}>`,
+                to: user.email,
+                subject: `Your Queue Token: ${tokenNumber}`,
+                html: `<h3>Hello ${user.name},</h3><p>You have successfully joined the queue for <strong>${serviceType}</strong>.</p><h1>Token: ${tokenNumber}</h1><p>Please wait for your token to be called.</p>`
+            });
+            console.log('Email sent to', user.email);
+        } catch (err) { console.error('Email failed:', err.message); }
+    }
+
+    // SMS Notification
+    const targetPhone = phone || (user ? user.phone : null);
+    if (targetPhone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+        try {
+            const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            await client.messages.create({
+                body: `SmartQueue: You joined the queue for ${serviceType}. Your Token is ${tokenNumber}.`,
+                from: process.env.TWILIO_PHONE_NUMBER,
+                to: targetPhone
+            });
+            console.log('SMS sent to', targetPhone);
+        } catch (err) { console.error('SMS failed:', err.message); }
+    }
+};
 
 // @desc    Get counter info by ID (Public)
 // @route   GET /api/queue/counter/:id
@@ -49,6 +84,13 @@ exports.generateToken = async (req, res) => {
         // Broadcast to all connected clients
         const io = req.app.get('io');
         if (io) io.emit('new_token', queueItem);
+
+        // Fetch user for notifications
+        let user = null;
+        if (userId) user = await User.findById(userId);
+
+        // Send Email & SMS asynchronously (don't block the response)
+        sendNotification(user, req.body.phone, tokenNumber, serviceType);
 
         res.status(201).json({
             success: true,

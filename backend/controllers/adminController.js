@@ -117,13 +117,14 @@ exports.createCounter = async (req, res) => {
 // @access  Private/Admin
 exports.updateCounter = async (req, res) => {
     try {
-        const { counterName, staff, status } = req.body;
+        const { counterName, staff, status, avgWaitTime } = req.body;
         const updateData = {};
         if (counterName) updateData.counterName = counterName;
         if (staff !== undefined) {
             updateData.staff = (staff === '' || staff === 'unassigned') ? null : staff;
         }
         if (status) updateData.status = status;
+        if (avgWaitTime !== undefined) updateData.avgWaitTime = Number(avgWaitTime);
 
         const counter = await Counter.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate('staff', 'name');
         

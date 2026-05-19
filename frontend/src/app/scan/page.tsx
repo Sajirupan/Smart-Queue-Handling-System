@@ -2,65 +2,40 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
-import { QrCode, ArrowLeft, Camera, ShieldCheck, Sparkles } from 'lucide-react';
+import { Scanner } from '@yudiel/react-qr-scanner';
+import { QrCode, ArrowLeft, Camera, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function GlobalScanPage() {
   const router = useRouter();
   const [scanning, setScanning] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // We only want the scanner to initialize on the client side
-    if (typeof window === 'undefined') return;
-
-    // Initialize the scanner
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        rememberLastUsedCamera: true,
-      },
-      false
-    );
-
-    const onScanSuccess = (decodedText: string) => {
-      // Stop the scanner
-      scanner.clear().catch(console.error);
+  const handleScan = (detectedCodes: any[]) => {
+    if (detectedCodes && detectedCodes.length > 0) {
+      const decodedText = detectedCodes[0].rawValue;
       setScanning(false);
       toast.success('QR Code Detected!');
       
       try {
-        // If the QR code is a full URL (e.g. http://localhost:3000/scan/COUNTER_ID?date=...)
         if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
           const url = new URL(decodedText);
-          // Navigate to the path + search params extracted from the QR code
           router.push(`${url.pathname}${url.search}`);
         } else {
-          // If the QR code is just the counter ID
           router.push(`/scan/${decodedText}`);
         }
       } catch (err) {
-        // Fallback if URL parsing fails
         router.push(`/scan/${decodedText}`);
       }
-    };
+    }
+  };
 
-    const onScanFailure = (error: any) => {
-      // Html5QrcodeScanner throws continuous errors while scanning for a code.
-      // We ignore these as they just mean "no QR code found yet in this frame".
-    };
-
-    // Render the scanner
-    scanner.render(onScanSuccess, onScanFailure);
-
-    // Cleanup function when component unmounts
-    return () => {
-      scanner.clear().catch(console.error);
-    };
-  }, [router]);
+  const handleError = (error: any) => {
+    console.error(error);
+    if (error?.name === 'NotAllowedError') {
+      setError('Camera access denied. Please allow camera permissions in your browser settings.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 flex flex-col items-center justify-center font-display relative overflow-hidden">
@@ -84,12 +59,24 @@ export default function GlobalScanPage() {
 
           <div className="p-8 bg-white flex flex-col items-center">
              {/* The container where html5-qrcode mounts its video stream */}
-             <div 
-               id="reader" 
-               className="w-full max-w-[300px] aspect-square rounded-3xl overflow-hidden border-4 border-slate-100 shadow-inner bg-slate-50 relative [&_video]:object-cover"
-             >
-               {/* Note: html5-qrcode dynamically injects UI elements here.
-                   We'll rely on its default rendering but house it in a sleek container. */}
+             <div className="w-full max-w-[300px] aspect-square rounded-3xl overflow-hidden border-4 border-slate-100 shadow-inner bg-slate-50 relative flex items-center justify-center">
+               {error ? (
+                 <div className="text-center p-6 flex flex-col items-center">
+                   <AlertCircle className="text-red-500 mb-2" size={32} />
+                   <p className="text-xs font-bold text-red-500">{error}</p>
+                 </div>
+               ) : scanning ? (
+                 <Scanner 
+                   onScan={handleScan} 
+                   onError={handleError}
+                   components={{ tracker: true }}
+                 />
+               ) : (
+                 <div className="text-center p-6 flex flex-col items-center">
+                   <ShieldCheck className="text-emerald-500 mb-2" size={32} />
+                   <p className="text-xs font-bold text-emerald-500">Scan Complete</p>
+                 </div>
+               )}
              </div>
              
              {scanning ? (

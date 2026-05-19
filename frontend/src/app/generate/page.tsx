@@ -82,19 +82,7 @@ export default function GenerateToken() {
 
   return (
     <div className="min-h-screen bg-surface-50 flex flex-col font-display">
-      <nav className="h-20 glass border-b border-slate-200/50 px-8 flex items-center justify-between sticky top-0 z-30">
-        <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center group-hover:rotate-6 transition-transform">
-               <Ticket className="text-white" size={18} />
-            </div>
-            <span className="text-xl font-black text-slate-900 tracking-tighter">SmartQueue</span>
-        </Link>
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-brand-primary transition-all uppercase tracking-widest">
-            <ArrowLeft size={14} /> Back Home
-          </Link>
-        </div>
-      </nav>
+
 
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">

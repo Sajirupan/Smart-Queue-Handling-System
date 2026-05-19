@@ -41,10 +41,14 @@ function ScanContent() {
   const { user } = useAuth() as any;
 
   useEffect(() => {
-    if (user && name === '') {
+    if (!user) {
+      toast.error('You must be logged in to join a queue');
+      router.push(`/login?redirect=/scan/${id}`);
+    } else if (name === '') {
       setName(user.name);
+      setPhone(user.phone || '');
     }
-  }, [user]);
+  }, [user, id, router]);
 
   useEffect(() => {
     const todayUTC = new Date().toISOString().split('T')[0];
@@ -76,9 +80,11 @@ function ScanContent() {
         const activeQueue = statsRes.data.data;
         const waitingForThisService = activeQueue.filter((q: any) => q.serviceType === found.counterName).length;
         
+        const avgTime = found.avgWaitTime || 5;
+        
         setQueueInfo({
           waitingCount: waitingForThisService,
-          estWaitTime: waitingForThisService * 5 // 5 mins per person estimate
+          estWaitTime: waitingForThisService * avgTime
         });
       } catch (err) {
         toast.error('Could not fetch counter information');

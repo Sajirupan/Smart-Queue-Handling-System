@@ -103,3 +103,23 @@ exports.completeService = async (req, res) => {
         res.status(400).json({ success: false, message: err.message });
     }
 };
+
+exports.updateCounterTime = async (req, res) => {
+    try {
+        const { avgWaitTime } = req.body;
+        const counter = await Counter.findOne({ staff: req.user.id });
+        if (!counter) {
+            return res.status(404).json({ success: false, message: 'You are not assigned to a counter' });
+        }
+        
+        counter.avgWaitTime = Number(avgWaitTime);
+        await counter.save();
+
+        const io = req.app.get('io');
+        io.emit('counter_updated', counter);
+
+        res.status(200).json({ success: true, data: counter });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};

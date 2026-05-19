@@ -38,6 +38,8 @@ export default function StaffDashboard() {
   const [waitingQueue, setWaitingQueue] = useState<any[]>([]);
   const [activeToken, setActiveToken] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [editingTime, setEditingTime] = useState(false);
+  const [avgWaitTimeInput, setAvgWaitTimeInput] = useState('');
 
   const fetchQueue = async () => {
     try {
@@ -132,6 +134,18 @@ export default function StaffDashboard() {
     }
   };
 
+  const handleUpdateTime = async () => {
+    if (!counter || !avgWaitTimeInput) return;
+    try {
+      const res = await api.put('/staff/counter-time', { avgWaitTime: avgWaitTimeInput });
+      setCounter(res.data.data);
+      setEditingTime(false);
+      toast.success('Wait time updated successfully');
+    } catch (err) {
+      toast.error('Failed to update wait time');
+    }
+  };
+
   if (loading || !user) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-50">
        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
@@ -187,9 +201,31 @@ export default function StaffDashboard() {
            <div className="h-4 w-px bg-slate-200" />
            <div className="flex items-center gap-2">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Counter:</span>
-              <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-[10px] font-black uppercase">
+              <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-[10px] font-black uppercase flex items-center gap-2">
                  {counter.counterName}
               </div>
+           </div>
+           <div className="h-4 w-px bg-slate-200" />
+           <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> Wait Time:</span>
+              {editingTime ? (
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    className="w-16 px-2 py-1 text-xs border rounded outline-none" 
+                    value={avgWaitTimeInput} 
+                    onChange={(e) => setAvgWaitTimeInput(e.target.value)} 
+                    placeholder="Mins"
+                  />
+                  <button onClick={handleUpdateTime} className="text-[10px] bg-brand-primary text-white px-2 py-1 rounded font-bold hover:bg-brand-primary/80 transition-colors">Save</button>
+                  <button onClick={() => setEditingTime(false)} className="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded font-bold hover:bg-slate-300 transition-colors">Cancel</button>
+                </div>
+              ) : (
+                <div className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-black uppercase cursor-pointer hover:bg-slate-200 transition-colors" onClick={() => { setEditingTime(true); setAvgWaitTimeInput(counter.avgWaitTime || 5); }} title="Click to edit average wait time per person">
+                  {counter.avgWaitTime || 5} MIN / PERSON
+                </div>
+              )}
            </div>
         </div>
 
