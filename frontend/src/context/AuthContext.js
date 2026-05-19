@@ -49,9 +49,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, role, phone) => {
+  const register = async (name, email, password, phone) => {
     try {
-      const data = await registerUser({ name, email, password, role, phone });
+      const data = await registerUser({ name, email, password, phone });
       localStorage.setItem('token', data.token);
       setUser(data.user);
       toast.success('Registration successful!');

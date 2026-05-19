@@ -12,7 +12,7 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phoneDigits, setPhoneDigits] = useState(''); // just the 9 digits after +94
   const [loading, setLoading] = useState(false);
   const { register, user, loading: authLoading } = useAuth() as any;
   const router = useRouter();
@@ -35,18 +35,18 @@ export default function Signup() {
       return;
     }
 
-    const cleanPhone = phone.replace(/\s+/g, '');
-    if (!/^\+94\d{9}$/.test(cleanPhone)) {
-      toast.error('Phone number must start with +94 followed by 9 digits');
+    if (phoneDigits.length !== 9) {
+      toast.error('Please enter exactly 9 digits after +94');
       setLoading(false);
       return;
     }
 
+    const fullPhone = `+94${phoneDigits}`;
+
     try {
-      await register(name, email, password, cleanPhone);
-      toast.success('Registration successful!');
+      await register(name, email, password, fullPhone);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      // error already handled in context with toast
     } finally {
       setLoading(false);
     }
@@ -128,16 +128,32 @@ export default function Signup() {
                   </div>
                   <div className="space-y-2">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                     <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                        <input
-                           type="tel"
-                           required
-                           value={phone}
-                           onChange={(e) => setPhone(e.target.value)}
-                           className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-[1.25rem] focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all text-sm font-medium"
-                           placeholder="+94 77 123 4567"
-                        />
+                     <div className="relative flex items-center">
+                       {/* Fixed +94 prefix */}
+                       <div className="absolute left-0 h-full flex items-center pl-4 pr-3 border-r border-slate-200 select-none">
+                         <Phone className="text-slate-300 mr-2" size={14} />
+                         <span className="text-sm font-black text-slate-500">+94</span>
+                       </div>
+                       <input
+                         type="text"
+                         inputMode="numeric"
+                         required
+                         value={phoneDigits}
+                         onChange={(e) => {
+                           // Strip non-digits, limit to 9 chars
+                           const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                           setPhoneDigits(digits);
+                         }}
+                         className="w-full pl-24 pr-4 py-4 bg-white border border-slate-200 rounded-[1.25rem] focus:ring-4 focus:ring-brand-primary/10 outline-none transition-all text-sm font-medium tracking-widest"
+                         placeholder="7XXXXXXXX"
+                         maxLength={9}
+                       />
+                       {/* Digit counter */}
+                       <span className={`absolute right-4 text-[10px] font-black tabular-nums ${
+                         phoneDigits.length === 9 ? 'text-emerald-500' : 'text-slate-300'
+                       }`}>
+                         {phoneDigits.length}/9
+                       </span>
                      </div>
                   </div>
                </div>
